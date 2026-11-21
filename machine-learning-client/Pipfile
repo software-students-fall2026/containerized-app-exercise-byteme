@@ -6,8 +6,12 @@ name = "pypi"
 [packages]
 black = "*"
 pylint = "*"
+pymongo = "*"
 
 [dev-packages]
+pytest = "*"
+pytest-cov = "*"
+mongomock = "*"
 
 [requires]
 python_version = "3.12"
