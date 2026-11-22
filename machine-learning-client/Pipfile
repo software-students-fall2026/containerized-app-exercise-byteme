@@ -7,11 +7,15 @@ name = "pypi"
 black = "*"
 pylint = "*"
 pymongo = "*"
+ultralytics = "*"
+pillow = "*"
+flask = "*"
+numpy = "==1.26.4"
 
 [dev-packages]
-pytest = "*"
 pytest-cov = "*"
 mongomock = "*"
+pytest = "*"
 
 [requires]
 python_version = "3.12"
