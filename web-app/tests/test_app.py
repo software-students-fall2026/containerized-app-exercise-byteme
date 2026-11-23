@@ -44,31 +44,39 @@ def test_pages_render(client):
 
 
 def test_api_inventory_empty(client):
-    response = client.get("/api/inventory")
-    assert response.get_json() == {"history": [], "latest": None}
+    data = client.get("/api/inventory").get_json()
+    assert data == {
+        "history": {"labels": [], "datasets": []},
+        "current": {"labels": [], "data": []},
+        "low_stock": [],
+    }
 
 
-def test_api_inventory_returns_history_oldest_first(client, collection):
+def test_api_inventory_returns_chart_data(client, collection):
     seed(collection)
     data = client.get("/api/inventory").get_json()
-    assert [r["counts"] for r in data["history"]] == [
-        {"bottle": 3},
-        {"bottle": 2, "cup": 1},
+    assert data["history"]["labels"] == [
+        "2026-11-20T10:00:00",
+        "2026-11-20T11:00:00",
     ]
-    assert data["latest"]["timestamp"] == "2026-11-20T11:00:00"
+    assert data["history"]["datasets"] == [
+        {"label": "bottle", "data": [3, 2]},
+        {"label": "cup", "data": [0, 1]},
+    ]
+    assert data["current"] == {"labels": ["bottle", "cup"], "data": [2, 1]}
+    assert data["low_stock"] == ["bottle", "cup"]
 
 
 def test_api_inventory_limit(client, collection):
     seed(collection)
     data = client.get("/api/inventory?limit=1").get_json()
-    assert len(data["history"]) == 1
-    assert data["history"][0]["counts"] == {"bottle": 2, "cup": 1}
+    assert data["history"]["labels"] == ["2026-11-20T11:00:00"]
 
 
 def test_api_inventory_limit_is_clamped(client, collection):
     seed(collection)
     data = client.get("/api/inventory?limit=0").get_json()
-    assert len(data["history"]) == 1
+    assert len(data["history"]["labels"]) == 1
 
 
 def test_upload_requires_image(client):

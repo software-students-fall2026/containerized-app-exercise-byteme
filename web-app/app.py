@@ -6,7 +6,8 @@ import requests
 from flask import Flask, jsonify, render_template, request
 from pymongo import MongoClient
 
-from inventory import get_history, get_latest
+from chart_data import build_dashboard_data
+from inventory import get_history
 
 ML_TIMEOUT_SECONDS = 30
 DEFAULT_HISTORY = 100
@@ -29,7 +30,7 @@ def create_app(config=None, collection=None):
         app.config.update(config)
 
     if collection is None:
-        client = MongoClient(app.config["MONGO_URI"])
+        client = MongoClient(app.config["MONGO_URI"], tz_aware=True)
         collection = client[app.config["MONGO_DB_NAME"]]["inventory"]
 
     @app.route("/health")
@@ -48,12 +49,7 @@ def create_app(config=None, collection=None):
     def api_inventory():
         limit = request.args.get("limit", DEFAULT_HISTORY, type=int)
         limit = max(1, min(limit, MAX_HISTORY))
-        return jsonify(
-            {
-                "history": get_history(collection, limit),
-                "latest": get_latest(collection),
-            }
-        )
+        return jsonify(build_dashboard_data(get_history(collection, limit)))
 
     @app.route("/upload", methods=["POST"])
     def upload():
