@@ -1,4 +1,5 @@
 """Inspect YOLO detections on a real vending machine image."""
+
 # Important: numpy < 2
 
 import csv
@@ -11,12 +12,9 @@ from ultralytics import YOLO
 
 from detector import SnackDetector
 
-
 BASE_DIR = Path(__file__).resolve().parent
 
-IMAGE_PATH = (
-    BASE_DIR / "fixtures" / "test_sample.png"
-)
+IMAGE_PATH = BASE_DIR / "fixtures" / "test_sample.png"
 
 OUTPUT_DIR = BASE_DIR / "detection_outputs"
 
@@ -26,7 +24,9 @@ MODEL_PATH = "yolo11m.pt"
 CONFIDENCE = 0.10
 
 
-def test_real_image():
+def test_real_image():  # pylint: disable=too-many-locals
+    """Run real detection and save visual diagnostics"""
+
     assert IMAGE_PATH.exists(), f"Image not found: {IMAGE_PATH}"
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -75,9 +75,7 @@ def test_real_image():
         )
 
     # Print counts and detailed detections.
-    visual_counts = Counter(
-        item["class"] for item in detections
-    )
+    visual_counts = Counter(item["class"] for item in detections)
 
     print("\n=== VISUALIZATION DETECTION COUNTS ===")
     print(dict(visual_counts))
@@ -100,22 +98,14 @@ def test_real_image():
         line_width=2,
     )
 
-    annotated_path = (
-        OUTPUT_DIR / f"YOLOm_multi_test.jpg"
-    )
+    annotated_path = OUTPUT_DIR / "YOLOm_multi_test.jpg"
 
-    Image.fromarray(annotated[:, :, ::-1]).save(
-        annotated_path
-    )
+    Image.fromarray(annotated[:, :, ::-1]).save(annotated_path)
 
     # Save detections to CSV.
-    csv_path = (
-        OUTPUT_DIR / f"YOLOm_multi_test.csv"
-    )
+    csv_path = OUTPUT_DIR / "YOLOm_multi_test.csv"
 
-    with csv_path.open(
-        "w", newline="", encoding="utf-8"
-    ) as file:
+    with csv_path.open("w", newline="", encoding="utf-8") as file:
         writer = csv.DictWriter(
             file,
             fieldnames=[
