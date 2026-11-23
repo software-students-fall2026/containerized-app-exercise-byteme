@@ -131,3 +131,30 @@ def test_upload_returns_502_on_invalid_json(mock_post, client):
         "/upload", data=image_data(), content_type="multipart/form-data"
     )
     assert response.status_code == 502
+
+
+def test_upload_rejects_unsupported_image_type(client):
+    response = client.post(
+        "/upload",
+        data=image_data("image/gif", "shelf.gif"),
+        content_type="multipart/form-data",
+    )
+    assert response.status_code == 400
+
+
+@patch("app.requests.post")
+def test_upload_returns_504_on_timeout(mock_post, client):
+    mock_post.side_effect = requests.Timeout()
+    response = client.post(
+        "/upload", data=image_data(), content_type="multipart/form-data"
+    )
+    assert response.status_code == 504
+
+
+def test_upload_rejects_oversized_file(app, client):
+    app.config["MAX_CONTENT_LENGTH"] = 5
+    response = client.post(
+        "/upload", data=image_data(), content_type="multipart/form-data"
+    )
+    assert response.status_code == 413
+    assert "too large" in response.get_json()["error"]
