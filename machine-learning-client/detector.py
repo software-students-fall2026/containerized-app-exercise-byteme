@@ -4,17 +4,20 @@ from collections import Counter
 from io import BytesIO
 
 
-class SnackDetector:
+class SnackDetector:  # pylint: disable=too-few-public-methods
+    """Detect and count objects in vending machine images"""
+
     def __init__(self, model=None, model_path="yolo11n.pt"):
+        """Initialize the detector with a YOLO model"""
         if model is None:
             from ultralytics import YOLO  # pylint: disable=import-outside-toplevel
 
             model = YOLO(model_path)
-            
+
         self.model = model
 
-    # Return detected object counts by class name
     def detect_items(self, image_bytes):
+        """Return detected object counts by class name"""
         if not image_bytes:
             raise ValueError("Image data cannot be empty")
 
