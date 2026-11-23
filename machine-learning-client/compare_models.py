@@ -17,6 +17,8 @@ IMAGE_SIZE = 640
 
 
 def main():
+    """Compare YOLO models on the same vending machine image."""
+
     OUTPUT_DIR.mkdir(exist_ok=True)
 
     for model_name in MODELS:
@@ -24,7 +26,6 @@ def main():
 
         model = YOLO(model_name)
 
-        # Exclude initial model loading from timing.
         start = perf_counter()
 
         result = model.predict(
@@ -37,22 +38,15 @@ def main():
 
         elapsed = perf_counter() - start
 
-        counts = Counter(
-            result.names[int(box.cls.item())]
-            for box in result.boxes
-        )
+        counts = Counter(result.names[int(box.cls.item())] for box in result.boxes)
 
         print("Counts:", dict(counts))
         print(f"Elapsed time: {elapsed:.2f}s")
 
         annotated = result.plot()
-        output_path = (
-            OUTPUT_DIR / f"{Path(model_name).stem}_result.jpg"
-        )
+        output_path = OUTPUT_DIR / f"{Path(model_name).stem}_result.jpg"
 
-        Image.fromarray(
-            annotated[:, :, ::-1]
-        ).save(output_path)
+        Image.fromarray(annotated[:, :, ::-1]).save(output_path)
 
         print("Saved:", output_path)
 
