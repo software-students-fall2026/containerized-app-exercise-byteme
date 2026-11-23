@@ -147,3 +147,11 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# local test results
+detection_outputs/
+
+# YOLO models
+yolo11n.pt
+yolo11s.pt
+yolo11m.pt
