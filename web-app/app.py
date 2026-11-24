@@ -7,7 +7,7 @@ from flask import Flask, jsonify, render_template, request
 from pymongo import MongoClient
 
 from chart_data import build_dashboard_data
-from inventory import get_history
+from inventory import get_history, parse_since
 
 ML_TIMEOUT_SECONDS = 30
 DEFAULT_HISTORY = 100
@@ -74,7 +74,17 @@ def create_app(config=None, collection=None):
     def api_inventory():
         limit = request.args.get("limit", DEFAULT_HISTORY, type=int)
         limit = max(1, min(limit, MAX_HISTORY))
-        return jsonify(build_dashboard_data(get_history(collection, limit)))
+        since = None
+        since_raw = request.args.get("since")
+        if since_raw:
+            try:
+                since = parse_since(since_raw)
+            except ValueError:
+                return (
+                    jsonify({"error": "since must be an ISO 8601 timestamp"}),
+                    400,
+                )
+        return jsonify(build_dashboard_data(get_history(collection, limit, since)))
 
     @app.route("/upload", methods=["POST"])
     def upload():
