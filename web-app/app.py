@@ -5,6 +5,7 @@ import os
 import requests
 from flask import Flask, jsonify, render_template, request
 from pymongo import MongoClient
+from pymongo.errors import PyMongoError
 
 from chart_data import build_dashboard_data
 from inventory import get_history, parse_since
@@ -14,6 +15,8 @@ DEFAULT_HISTORY = 100
 MAX_HISTORY = 500
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
+HEALTH_TIMEOUT_SECONDS = 3
+MONGO_TIMEOUT_MS = 2000
 
 
 def forward_to_ml_client(url, image):
@@ -35,6 +38,24 @@ def forward_to_ml_client(url, image):
         return {"error": "Could not reach the ML client"}, 502
 
 
+def check_mongo(collection):
+    """Return "ok" if MongoDB answers a ping, otherwise "unreachable"."""
+    try:
+        collection.database.command("ping")
+        return "ok"
+    except PyMongoError:
+        return "unreachable"
+
+
+def check_ml_client(url):
+    """Return "ok" if the ML client answers at all, otherwise "unreachable"."""
+    try:
+        requests.get(url, timeout=HEALTH_TIMEOUT_SECONDS)
+        return "ok"
+    except requests.RequestException:
+        return "unreachable"
+
+
 def create_app(config=None, collection=None):
     """Create and configure the Flask app.
 
@@ -51,7 +72,11 @@ def create_app(config=None, collection=None):
         app.config.update(config)
 
     if collection is None:
-        client = MongoClient(app.config["MONGO_URI"], tz_aware=True)
+        client = MongoClient(
+            app.config["MONGO_URI"],
+            tz_aware=True,
+            serverSelectionTimeoutMS=MONGO_TIMEOUT_MS,
+        )
         collection = client[app.config["MONGO_DB_NAME"]]["inventory"]
 
     @app.errorhandler(413)
@@ -60,7 +85,13 @@ def create_app(config=None, collection=None):
 
     @app.route("/health")
     def health():
-        return jsonify({"status": "ok"})
+        checks = {
+            "mongodb": check_mongo(collection),
+            "ml_client": check_ml_client(app.config["ML_CLIENT_URL"]),
+        }
+        healthy = all(value == "ok" for value in checks.values())
+        status = "ok" if healthy else "degraded"
+        return jsonify({"status": status, **checks}), 200 if healthy else 503
 
     @app.route("/")
     def dashboard():
