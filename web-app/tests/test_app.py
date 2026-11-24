@@ -158,3 +158,21 @@ def test_upload_rejects_oversized_file(app, client):
     )
     assert response.status_code == 413
     assert "too large" in response.get_json()["error"]
+
+
+def test_api_inventory_since_filters_records(client, collection):
+    collection.insert_many(
+        [
+            {"timestamp": datetime(2026, 11, 20, 9), "counts": {"chips": 5}},
+            {"timestamp": datetime(2026, 11, 20, 11), "counts": {"chips": 3}},
+        ]
+    )
+    response = client.get("/api/inventory?since=2026-11-20T10:00:00")
+    assert response.status_code == 200
+    assert len(response.get_json()["history"]["labels"]) == 1
+
+
+def test_api_inventory_rejects_invalid_since(client):
+    response = client.get("/api/inventory?since=yesterday")
+    assert response.status_code == 400
+    assert "ISO 8601" in response.get_json()["error"]
