@@ -66,10 +66,7 @@ def main():
             print(f"FAIL {name} {exc}")
 
     print(f"\n{len(checks) - failures}/{len(checks)} checks passed")
-    if failures:
-        return 1
-    else:
-        return 0
+    return 1 if failures else 0
 
 
 if __name__ == "__main__":
