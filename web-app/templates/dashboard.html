@@ -16,6 +16,7 @@
       margin: 10px 0;
     }
     #empty { color: #666;}
+    #latest_photo { max-width: 100%; }
   </style>
 </head>
 <body>
@@ -24,6 +25,11 @@
   
   <div id="alerts"></div>
   <p id="empty" hidden> No data. Take a photo to get started. </p>
+
+  <div id="photo_card" hidden>
+    <h2> Latest Photo: </h2>
+    <img id="latest_photo" alt="Recent uploaded photo">
+  </div>
 
   <h2> Current Inventory: </h2>
   <canvas id="current_chart"></canvas>
@@ -34,7 +40,20 @@
 
   <script>
 
+    function loadPhoto(){
+      const card = document.getElementById('photo_card');
+      const img = document.getElementById('latest_photo');
+      img.onload = () => {
+        card.hidden = false;
+      };
+      img.onerror = () => {
+        card.hidden = true;
+      };
+      img.src = '/latest-photo?t=' + Date.now();
+    }
+
     async function load(){
+      loadPhoto();
       const result = await fetch('/api/inventory');
       const data = await result.json();
     

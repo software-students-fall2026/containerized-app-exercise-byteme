@@ -206,3 +206,60 @@ def test_api_inventory_rejects_invalid_since(client):
     response = client.get("/api/inventory?since=yesterday")
     assert response.status_code == 400
     assert "ISO 8601" in response.get_json()["error"]
+
+
+def test_latest_photo_404_when_none(client):
+    response = client.get("/latest-photo")
+    assert response.status_code == 404
+
+
+@patch("app.requests.post")
+def test_upload_saves_latest_photo(mock_post, client):
+    mock_post.return_value = ml_response(200, {"counts": {"bottle": 2}})
+    client.post("/upload", data=image_data(), content_type="multipart/form-data")
+    response = client.get("/latest-photo")
+    assert response.status_code == 200
+    assert response.data == b"fake-bytes"
+    assert response.mimetype == "image/jpeg"
+    assert response.headers["Cache-Control"] == "no-cache"
+
+
+@patch("app.requests.post")
+def test_new_upload_replaces_latest_photo(mock_post, client):
+    mock_post.return_value = ml_response(200, {"counts": {}})
+    client.post("/upload", data=image_data(), content_type="multipart/form-data")
+    client.post(
+        "/upload",
+        data={"image": (io.BytesIO(b"new-bytes"), "new.png", "image/png")},
+        content_type="multipart/form-data",
+    )
+    response = client.get("/latest-photo")
+    assert response.data == b"new-bytes"
+    assert response.mimetype == "image/png"
+
+
+def test_reject_upload_saves_no_photo(client):
+    client.post(
+        "/upload",
+        data=image_data("text/plain", "notes.txt"),
+        content_type="multipart/form-data",
+    )
+    assert client.get("/latest-photo").status_code == 404
+
+
+@patch("app.requests.post")
+def test_failed_analysis_saves_no_photo(mock_post, client):
+    mock_post.return_value = ml_response(500)
+    client.post("/upload", data=image_data(), content_type="multipart/form-data")
+    assert client.get("/latest-photo").status_code == 404
+
+
+@patch("app.save_latest_photo", side_effect=PyMongoError("write failed"))
+@patch("app.requests.post")
+def test_upload_still_succeeds_when_photo_save_fails(mock_post, _mock_save, client):
+    mock_post.return_value = ml_response(200, {"counts": {"bottle": 2}})
+    response = client.post(
+        "/upload", data=image_data(), content_type="multipart/form-data"
+    )
+    assert response.status_code == 200
+    assert response.get_json() == {"counts": {"bottle": 2}}
