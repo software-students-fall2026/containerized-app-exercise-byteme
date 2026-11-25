@@ -10,7 +10,7 @@ The project uses common object categories such as bottles, cups, and fruit rathe
 
 - [Tracy](https://github.com/TracyWang0904): web backend and web Dockerfile
 - [Emma](https://github.com/emma6594): camera interface, dashboard, and chart formatting
-- [Uuree](https://github.com/Uurii1003): database helpers, alerts, CI, seed data, and documentation
+- [Uuree](https://github.com/Uuriii1003): database helpers, alerts, CI, seed data, and documentation
 - [Jingjing](https://github.com/JingjingWang129): object detection, ML service, and Docker Compose
 
 ## Architecture
