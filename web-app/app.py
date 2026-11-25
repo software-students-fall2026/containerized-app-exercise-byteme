@@ -1,6 +1,7 @@
 """Flask web app for the snack inventory tracker."""
 
 import io
+import logging
 import os
 
 import requests
@@ -78,6 +79,7 @@ def create_app(config=None, collection=None):
     )
     if config:
         app.config.update(config)
+        app.logger.setLevel(logging.INFO)
 
     if collection is None:
         client = MongoClient(
@@ -90,6 +92,14 @@ def create_app(config=None, collection=None):
     @app.errorhandler(413)
     def too_large(_error):
         return jsonify({"error": "Image is too large (max 10 MB)"}), 413
+
+    @app.after_request
+    def log_request(response):
+        if request.path != "/health":
+            app.logger.info(
+                "%s %s -> %s", request.method, request.path, response.status_code
+            )
+        return response
 
     @app.route("/health")
     def health():
@@ -144,6 +154,8 @@ def create_app(config=None, collection=None):
 
         url = f"{app.config['ML_CLIENT_URL']}/analyze"
         payload, status = forward_to_ml_client(url, image)
+        if status != 200:
+            app.logger.warning("ML client call failed with status %s", status)
         if status == 200:
             image.stream.seek(0)
             data = image.read()

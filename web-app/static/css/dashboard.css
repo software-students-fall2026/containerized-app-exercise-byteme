@@ -1,0 +1,14 @@
+.alert {
+      background: #fdf4b7;
+      border: 1px solid #ff7707;
+      padding: 10px;
+      margin: 10px 0;
+    }
+
+#empty { 
+    color: #666;
+}
+
+#latest_photo { 
+    max-width: 100%; 
+}

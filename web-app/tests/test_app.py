@@ -3,6 +3,7 @@
 # pylint: disable=missing-function-docstring
 
 import io
+import logging
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
@@ -283,3 +284,23 @@ def test_api_inventory_returns_shelf_status(client, collection):
     assert data["alerts"] == [
         {"shelf_id": "S1", "status": "low_stock", "missing": ["eggs"]}
     ]
+def test_requests_are_logged(client, caplog):
+    with caplog.at_level(logging.INFO):
+        client.get("/")
+    assert "GET / -> 200" in caplog.text
+
+
+@patch("app.requests.get")
+def test_health_requests_are_not_logged(mock_get, client, caplog):
+    mock_get.return_value = MagicMock(status_code=200)
+    with caplog.at_level(logging.INFO):
+        client.get("/health")
+    assert "/health" not in caplog.text
+
+
+@patch("app.requests.post")
+def test_failed_ml_call_is_logged(mock_post, client, caplog):
+    mock_post.return_value = ml_response(500)
+    with caplog.at_level(logging.WARNING):
+        client.post("/upload", data=image_data(), content_type="multipart/form-data")
+    assert "ML client call failed with status 502" in caplog.text
