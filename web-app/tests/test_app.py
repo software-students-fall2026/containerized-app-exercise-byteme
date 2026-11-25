@@ -284,6 +284,8 @@ def test_api_inventory_returns_shelf_status(client, collection):
     assert data["alerts"] == [
         {"shelf_id": "S1", "status": "low_stock", "missing": ["eggs"]}
     ]
+
+
 def test_requests_are_logged(client, caplog):
     with caplog.at_level(logging.INFO):
         client.get("/")

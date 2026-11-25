@@ -1,3 +1,5 @@
+"""Smoke test: check /health, /api/inventory and /upload on a running server."""
+
 import argparse
 import sys
 
@@ -44,6 +46,7 @@ def check_upload(base_url, image_path):
 
 
 def main():
+    """Run all checks and return a process exit code (0 = all passed)."""
     parser = argparse.ArgumentParser()
     parser.add_argument("base_url", nargs="?", default="http://localhost:5000")
     parser.add_argument("--image", default="sample.jpg")
