@@ -14,7 +14,7 @@ from detector import SnackDetector
 
 BASE_DIR = Path(__file__).resolve().parent
 
-IMAGE_PATH = BASE_DIR / "fixtures" / "test_sample.png"
+IMAGE_PATH = BASE_DIR / "fixtures" / "refrigerator_sample.jpg"
 
 OUTPUT_DIR = BASE_DIR / "detection_outputs"
 
@@ -98,12 +98,12 @@ def test_real_image():  # pylint: disable=too-many-locals
         line_width=2,
     )
 
-    annotated_path = OUTPUT_DIR / "YOLOm_multi_test.jpg"
+    annotated_path = OUTPUT_DIR / "YOLOm_ref_test.jpg"
 
     Image.fromarray(annotated[:, :, ::-1]).save(annotated_path)
 
     # Save detections to CSV.
-    csv_path = OUTPUT_DIR / "YOLOm_multi_test.csv"
+    csv_path = OUTPUT_DIR / "YOLOm_ref_test.csv"
 
     with csv_path.open("w", newline="", encoding="utf-8") as file:
         writer = csv.DictWriter(

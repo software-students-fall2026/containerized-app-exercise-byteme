@@ -7,7 +7,7 @@ from io import BytesIO
 class SnackDetector:  # pylint: disable=too-few-public-methods
     """Detect and count objects in vending machine images"""
 
-    def __init__(self, model=None, model_path="yolo11n.pt"):
+    def __init__(self, model=None, model_path="yolo11m.pt"):
         """Initialize the detector with a YOLO model"""
         if model is None:
             from ultralytics import YOLO  # pylint: disable=import-outside-toplevel
