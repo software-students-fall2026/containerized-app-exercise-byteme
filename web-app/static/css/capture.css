@@ -1,0 +1,31 @@
+video, img { 
+    display: block; 
+    width: 100%; 
+    background: #ffffff; 
+    border-radius: 8px; 
+}
+
+img:not([src]) {
+    display:none;
+}
+
+button, input {
+    font-family: inherit; 
+}
+
+.section { 
+    margin: 20px 0;
+}
+
+.controls { 
+    display: flex; 
+    flex-wrap: wrap; 
+    gap: 10px; 
+    margin-top: 10px;
+}
+
+button { 
+    padding: 10px 16px; 
+    font-size: 16px; 
+    cursor: pointer; 
+}
