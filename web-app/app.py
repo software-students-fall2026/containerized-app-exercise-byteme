@@ -1,9 +1,10 @@
 """Flask web app for the snack inventory tracker."""
 
+import io
 import os
 
 import requests
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, send_file
 from pymongo import MongoClient
 from pymongo.errors import PyMongoError
 
@@ -56,6 +57,13 @@ def check_ml_client(url):
         return "unreachable"
 
 
+def save_latest_photo(collection, data, mimetype):
+    """Store the uploaded image, replacing previous latest photo."""
+    collection.database["latest_photo"].replace_one(
+        {"_id": "latest"}, {"data": data, "mimetype": mimetype}, upsert=True
+    )
+
+
 def create_app(config=None, collection=None):
     """Create and configure the Flask app.
 
@@ -101,6 +109,15 @@ def create_app(config=None, collection=None):
     def capture():
         return render_template("capture.html")
 
+    @app.route("/latest-photo")
+    def latest_photo():
+        doc = collection.database["latest_photo"].find_one({"_id": "latest"})
+        if doc is None:
+            return jsonify({"error": "No photo yet"}), 404
+        response = send_file(io.BytesIO(doc["data"]), mimetype=doc["mimetype"])
+        response.headers["Cache-Control"] = "no-cache"
+        return response
+
     @app.route("/api/inventory")
     def api_inventory():
         limit = request.args.get("limit", DEFAULT_HISTORY, type=int)
@@ -127,6 +144,13 @@ def create_app(config=None, collection=None):
 
         url = f"{app.config['ML_CLIENT_URL']}/analyze"
         payload, status = forward_to_ml_client(url, image)
+        if status == 200:
+            image.stream.seek(0)
+            data = image.read()
+            try:
+                save_latest_photo(collection, data, image.mimetype)
+            except PyMongoError:
+                app.logger.exception("Could not save latest photo")
         return jsonify(payload), status
 
     return app
