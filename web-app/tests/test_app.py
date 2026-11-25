@@ -7,6 +7,9 @@ from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import requests
+from pymongo.errors import PyMongoError
+
+from app import create_app
 
 
 def seed(collection):
@@ -32,10 +35,37 @@ def ml_response(status_code=200, payload=None):
     return response
 
 
-def test_health(client):
+@patch("app.requests.get")
+def test_health_ok(mock_get, client):
+    mock_get.return_value = MagicMock(status_code=200)
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.get_json() == {"status": "ok"}
+    assert response.get_json() == {
+        "status": "ok",
+        "mongodb": "ok",
+        "ml_client": "ok",
+    }
+
+
+@patch("app.requests.get", side_effect=requests.ConnectionError())
+def test_health_503_when_ml_client_down(_mock_get, client):
+    response = client.get("/health")
+    assert response.status_code == 503
+    body = response.get_json()
+    assert body["status"] == "degraded"
+    assert body["mongodb"] == "ok"
+    assert body["ml_client"] == "unreachable"
+
+
+@patch("app.requests.get")
+def test_health_503_when_mongo_down(mock_get):
+    mock_get.return_value = MagicMock(status_code=200)
+    broken = MagicMock()
+    broken.database.command.side_effect = PyMongoError("down")
+    app = create_app({"TESTING": True, "ML_CLIENT_URL": "http://ml.test"}, broken)
+    response = app.test_client().get("/health")
+    assert response.status_code == 503
+    assert response.get_json()["mongodb"] == "unreachable"
 
 
 def test_pages_render(client):
