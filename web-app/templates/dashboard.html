@@ -26,7 +26,7 @@
   <div id="alerts"></div>
   <p id="empty" hidden> No data. Take a photo to get started. </p>
 
-  <div id="photo-card" hidden>
+  <div id="photo_card" hidden>
     <h2> Latest Photo: </h2>
     <img id="latest_photo" alt="Recent uploaded photo">
   </div>
@@ -48,7 +48,7 @@
       };
       img.onerror = () => {
         card.hidden = true;
-      }
+      };
       img.src = '/latest-photo?t=' + Date.now();
     }
 
@@ -76,6 +76,7 @@
       });
 
       const box = document.getElementById('alerts');
+      box.innerHTML = '';
 
       if (data.low_stock.length > 0){
         box.innerHTML = `<div class="alert"> Low stock: ${data.low_stock.join(', ')}</div>`;
