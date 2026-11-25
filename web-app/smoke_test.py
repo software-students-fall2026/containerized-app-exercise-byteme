@@ -1,3 +1,5 @@
+"""Smoke test: check /health, /api/inventory and /upload on a running server."""
+
 import argparse
 import sys
 
@@ -44,6 +46,7 @@ def check_upload(base_url, image_path):
 
 
 def main():
+    """Run all checks and return a process exit code (0 = all passed)."""
     parser = argparse.ArgumentParser()
     parser.add_argument("base_url", nargs="?", default="http://localhost:5000")
     parser.add_argument("--image", default="sample.jpg")
@@ -66,10 +69,7 @@ def main():
             print(f"FAIL {name} {exc}")
 
     print(f"\n{len(checks) - failures}/{len(checks)} checks passed")
-    if failures:
-        return 1
-    else:
-        return 0
+    return 1 if failures else 0
 
 
 if __name__ == "__main__":

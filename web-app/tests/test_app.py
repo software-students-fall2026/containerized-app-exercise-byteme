@@ -11,6 +11,7 @@ import requests
 from pymongo.errors import PyMongoError
 
 from app import create_app
+from chart_data import build_dashboard_data
 
 
 def seed(collection):
@@ -76,11 +77,7 @@ def test_pages_render(client):
 
 def test_api_inventory_empty(client):
     data = client.get("/api/inventory").get_json()
-    assert data == {
-        "history": {"labels": [], "datasets": []},
-        "current": {"labels": [], "data": []},
-        "low_stock": [],
-    }
+    assert data == build_dashboard_data([])
 
 
 def test_api_inventory_returns_chart_data(client, collection):
@@ -264,6 +261,29 @@ def test_upload_still_succeeds_when_photo_save_fails(mock_post, _mock_save, clie
     )
     assert response.status_code == 200
     assert response.get_json() == {"counts": {"bottle": 2}}
+
+
+def test_api_inventory_returns_shelf_status(client, collection):
+    collection.insert_one(
+        {
+            "timestamp": datetime(2026, 11, 25, 10, 0),
+            "shelves": [
+                {
+                    "shelf_id": "S1",
+                    "fill_ratio": 0.1,
+                    "status": "low_stock",
+                    "detected": ["milk"],
+                    "missing": ["eggs"],
+                }
+            ],
+        }
+    )
+    data = client.get("/api/inventory").get_json()
+    assert data["shelves"][0]["shelf_id"] == "S1"
+    assert data["fill_history"]["datasets"] == [{"label": "S1", "data": [0.1]}]
+    assert data["alerts"] == [
+        {"shelf_id": "S1", "status": "low_stock", "missing": ["eggs"]}
+    ]
 
 
 def test_requests_are_logged(client, caplog):
