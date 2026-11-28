@@ -4,15 +4,11 @@ from pathlib import Path
 
 from ultralytics import YOLO
 
-
 BASE_DIR = Path(__file__).resolve().parent
 
 MODEL_PATH = BASE_DIR / "weights/fridge_layers.pt"
 
-IMAGE_PATH = (
-    BASE_DIR
-    / "fixtures/refrigerator_sample.jpg"
-)
+IMAGE_PATH = BASE_DIR / "fixtures/refrigerator_sample.jpg"
 
 
 def main():
@@ -33,18 +29,13 @@ def main():
     )
 
     for result in results:
-
         print("Detected layers:", len(result.boxes))
 
         for box in result.boxes:
-
             bbox = box.xyxy[0].tolist()
             confidence = float(box.conf.item())
 
-            print(
-                f"BBox: {bbox}, "
-                f"Confidence: {confidence:.4f}"
-            )
+            print(f"BBox: {bbox}, " f"Confidence: {confidence:.4f}")
 
 
 if __name__ == "__main__":
