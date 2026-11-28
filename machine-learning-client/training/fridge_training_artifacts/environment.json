@@ -1,0 +1,24 @@
+{
+  "python": "3.13.16",
+  "torch": "2.14.1+cu130",
+  "ultralytics": "8.4.220",
+  "gpu": "Tesla T4",
+  "dataset": "fridge_layers_v1.zip",
+  "dataset_summary": {
+    "train": {
+      "images": 35,
+      "labels": 35,
+      "boxes": 161
+    },
+    "valid": {
+      "images": 10,
+      "labels": 10,
+      "boxes": 44
+    },
+    "test": {
+      "images": 5,
+      "labels": 5,
+      "boxes": 21
+    }
+  }
+}
