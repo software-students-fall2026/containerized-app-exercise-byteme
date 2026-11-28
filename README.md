@@ -1,8 +1,8 @@
-# Snack Inventory Tracker
+# Fridge Inventory Tracker
 
 [![Lint](https://github.com/software-students-fall2026/containerized-app-exercise-byteme/actions/workflows/lint.yml/badge.svg)](https://github.com/software-students-fall2026/containerized-app-exercise-byteme/actions/workflows/lint.yml)
 
-Snack Inventory Tracker helps users monitor a snack shelf or fridge. Users take a photo in their browser or upload an image. The planned machine learning service detects objects, counts them by class, and saves inventory snapshots to MongoDB. The web dashboard displays current counts, inventory history, and low-stock alerts.
+Fridge Inventory Tracker helps users monitor a fridge. Users take a photo in their browser or upload an image. The planned machine learning service detects objects, counts them by class, and saves inventory snapshots to MongoDB. The web dashboard displays current counts, inventory history, and low-stock alerts.
 
 The project uses common object categories such as bottles, cups, and fruit rather than specific snack brands.
 
@@ -134,10 +134,10 @@ docker start snack-mongodb
 From the repository’s `web-app` directory, set the local environment variables above and run:
 
 ```bash
-pipenv run python app.py
+pipenv run flask --app app run --port 5050
 ```
 
-Open [http://localhost:5000](http://localhost:5000).
+Open [http://localhost:5050](http://localhost:5050).
 
 The dashboard can display existing MongoDB records. Upload analysis will return an error until an ML service is running at `ML_CLIENT_URL`. No starter data is loaded automatically.
 
@@ -169,17 +169,25 @@ The ML database module provides:
 
 | Method | Route | Purpose |
 | --- | --- | --- |
-| GET | `/` | Inventory dashboard |
-| GET | `/capture` | Camera and upload interface |
-| GET | `/health` | Basic web-service response |
-| GET | `/api/inventory` | Chart data and low-stock item names |
-| POST | `/upload` | Forward an image to the ML service |
+| GET | `/` | Dashboard: shelf levels, alerts, latest photo, history chart |
+| GET | `/capture` | Camera and upload interface: Take a photo with the camera or upload one|
+| POST | `/upload` | Forward an image to the ML service: saves it as the latest photo if analysis is successful |
+| GET | `/latest-photo` | The last successfully analyzed image (404 if none) |
+| GET | `/health` | Checks MongoDB and the ML service |
+| GET | `/api/inventory` | Dashboard data |
+
+The ML endpoint `POST / analyze` retunrs `{"shelves": {"top": "low", "middle": "full"}}`
+
+The latest photo is stored in the `latest_photo` collection as one document, `{"_id": "latest", "data": <bytes>, "mimetype": "image/jpeg"}`, which each new upload replaces.
+
 
 Uploads use multipart field `image`. The planned ML endpoint is `POST /analyze`, with a response such as:
 
 ```json
-{"counts": {"bottle": 2}}
+{"shelves": {"top": "low", "middle": "full"}}
 ```
+
+Levels are `low`, `moderate`, or `full`. The inventory API returns `history` (level per shelf over time), `current` (latest level per shelf) and `alerts` (shelves whose latest level is low).
 
 The inventory API returns `history`, `current`, and `low_stock`.
 
@@ -188,6 +196,16 @@ Currently, low stock means **fewer than three items**. Item classes are inferred
 ## Tests and Code Quality
 
 Run commands from the relevant subsystem directory.
+
+### Smoke Test
+
+With the stack running (`docker compose up --build`), from `web-app/`:
+
+```bash
+pipenv run python smoke_test.py http://localhost:5050
+```
+
+It checks `/health`, `/api/inventory`, `/upload` and `/latest-photo`, and prints PASS or FAIL for each.
 
 ### Machine Learning Client
 
